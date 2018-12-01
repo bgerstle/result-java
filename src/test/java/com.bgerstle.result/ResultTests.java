@@ -6,7 +6,13 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.quicktheories.core.Gen;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -24,6 +30,30 @@ public class ResultTests {
             .map(Result::of);
   }
 
+  @Test
+  void emptyOptionalTransformationExample() {
+    assertThrows(NoSuchElementException.class, () ->
+        Result.<String, Exception>attempt(Optional.<String>empty()::get)
+              .flatMapAttempt(URI::new)
+              .orElseThrow());
+  }
+
+  @Test
+  void optionalInvalidURITransformationExample() {
+    assertThrows(URISyntaxException.class, () ->
+        Result.<String, Exception>attempt(Optional.of("://")::get)
+            .flatMapAttempt(URI::new)
+            .orElseThrow());
+  }
+
+  @Test
+  void optionalValidURITransformationExample() throws Exception {
+    URI apiBaseUrl =
+        Result.<String, Exception>attempt(Optional.of("http://example.com")::get)
+            .flatMapAttempt(URI::new)
+            .orElseThrow();
+    assertThat(apiBaseUrl, equalTo(new URI("http://example.com")));
+  }
 
   @Test
   void wrapsValues() {
