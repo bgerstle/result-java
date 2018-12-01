@@ -1,7 +1,7 @@
 ![badget](https://travis-ci.org/bgerstle/result-java.svg?branch=master)
 
 # Result
-A simple `Result` type in Java for functional exception handling.
+A simple `Result` type in Java for functional exception handling. Inspired by Haskell's `Either`, [antitypical/Result](https://github.com/antitypical/Result) in Swift, and [cyclops' `Try`](https://github.com/aol/cyclops/blob/master/cyclops/src/main/java/cyclops/control/Try.java).
 
 ## Why should I use it?
 **TL;DR;** `Result` allows you to call methods that throw checked exceptions in lambas without messy workarounds like nested try/catch or runtime exceptions.
