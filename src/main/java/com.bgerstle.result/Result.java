@@ -3,6 +3,7 @@ package com.bgerstle.result;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class Result<V, E extends Throwable> {
   private final V value;
@@ -86,6 +87,20 @@ public class Result<V, E extends Throwable> {
         .orElseGet(() ->
                        Result.failure(Objects.requireNonNull(error))
         );
+  }
+
+  /**
+   * Recover from a specific exception (and its subclasses), providing a fallback value.
+   * @param eClass    The exception class to "catch," along with its subclasses.
+   * @param recovery  A function returning a fallback value in case of the specified exception(s).
+   * @param <E2>      Type parameter constraining eClass to exceptions.
+   * @return A Result which either has the receiver's data, or the fallback value in case the specified exception class was caught.
+   */
+  public <E2 extends Throwable> Result<V, E> recover(Class<E2> eClass, Supplier<V> recovery) {
+    if (getError().flatMap(e -> eClass.isInstance(e) ? Optional.of(e) : Optional.empty()).isPresent()) {
+      return Result.success(recovery.get());
+    }
+    return this;
   }
 
   public V orElseThrow() throws E {

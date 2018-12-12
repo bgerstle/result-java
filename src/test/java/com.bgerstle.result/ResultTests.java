@@ -7,12 +7,11 @@ import org.quicktheories.core.Gen;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -36,14 +35,6 @@ public class ResultTests {
         Result.<String, Exception>attempt(Optional.<String>empty()::get)
               .flatMapAttempt(URI::new)
               .orElseThrow());
-  }
-
-  @Test
-  void optionalInvalidURITransformationExample() {
-    assertThrows(URISyntaxException.class, () ->
-        Result.<String, Exception>attempt(Optional.of("://")::get)
-            .flatMapAttempt(URI::new)
-            .orElseThrow());
   }
 
   @Test
@@ -75,6 +66,39 @@ public class ResultTests {
             })
             .orElseThrow()
     );
+  }
+
+  @ParameterizedTest
+  @ValueSource(classes = {RuntimeException.class,
+                          IOException.class,
+                          Exception.class})
+  void recoversFromExceptions(Class<Exception> exceptionClass) throws Exception {
+    assertThat(Result.failure(exceptionClass.getConstructor().newInstance())
+                     .recover(exceptionClass, () -> "foo")
+                     .orElseThrow(),
+               equalTo("foo"));
+  }
+
+  @ParameterizedTest
+  @ValueSource(classes = {RuntimeException.class,
+                          IOException.class,
+                          Exception.class})
+  void recoverNoopsForOtherExceptions(Class<Exception> exceptionClass) throws Exception {
+    assertThrows(exceptionClass, () ->
+        Result.failure(exceptionClass.getConstructor().newInstance())
+              .recover(TimeoutException.class, () -> "not supposed to be called")
+              .orElseThrow());
+  }
+
+  @ParameterizedTest
+  @ValueSource(classes = {RuntimeException.class,
+                          IllegalArgumentException.class,
+                          IllegalStateException.class})
+  void recoversClassAndItsSubclasses(Class<Exception> exceptionClass) throws Exception {
+    assertThat(Result.failure(exceptionClass.getConstructor().newInstance())
+                     .recover(RuntimeException.class, () -> "foo")
+                     .orElseThrow(),
+               equalTo("foo"));
   }
 
   @Test
