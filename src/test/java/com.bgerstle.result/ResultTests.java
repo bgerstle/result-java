@@ -7,10 +7,13 @@ import org.quicktheories.core.Gen;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
 
+import static java.lang.Integer.parseInt;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -181,5 +184,27 @@ public class ResultTests {
                && r.hashCode() == r.hashCode()),
               is(true));
         });
+  }
+
+  @Test
+  void resultCollectorAllSuccessful() {
+    assertThat(
+        Stream
+            .of("1", "2", "3", "1337")
+            .map(i -> Result.<Integer, NumberFormatException>attempt(() -> parseInt(i)))
+            .collect(new ResultCollector<>())
+            .orElseThrow(),
+        equalTo(List.of(1, 2, 3, 1337)));
+  }
+
+  @Test
+  void resultCollectorThrowsOnFailure() {
+    assertThrows(NumberFormatException.class, () -> {
+      Stream
+          .of("1", "2", "3", "can't parse me")
+          .map(i -> Result.<Integer, NumberFormatException>attempt(() -> parseInt(i)))
+          .collect(new ResultCollector<>())
+          .orElseThrow();
+    });
   }
 }
