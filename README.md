@@ -49,7 +49,7 @@ Variable reassignment, nested try/catch blocks, and runtime exceptions—oh my! 
 ``` java
 URI apiBaseURI = Result
   .<String, Exception>attempt(Optional.ofNullable(System.getenv("apiBaseURL")::get) // 1
-  .flatMapAttempt(URI::new) // 2
+  .flatMap(Result.from(URI::new)) // 2
   .orElseThrow(); // 3
 ```
 
