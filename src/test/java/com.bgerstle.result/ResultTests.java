@@ -17,6 +17,7 @@ import java.util.stream.Stream;
 import static java.lang.Integer.parseInt;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -229,5 +230,33 @@ public class ResultTests {
                 .map(Result.from(URI::new))
                 .get()
                 .orElseThrow());
+  }
+
+  URI parseUri(String nullableString) throws URISyntaxException {
+    return Result.<String, Exception>attempt(Optional.ofNullable(nullableString)::get)
+        .flatMap(Result.from(URI::new))
+        .map(Optional::of)
+        .recover(NoSuchElementException.class, Optional::empty)
+        .orElseThrowAs(e -> (URISyntaxException)e)
+        .orElse(null);
+  }
+
+  @Test
+  void recoverFlatMapExampleSuccess() throws URISyntaxException {
+    assertThat(
+        parseUri("http://example.com"),
+        equalTo(new URI("http://example.com")));
+  }
+
+  @Test
+  void recoverFlatMapExampleFailure() throws URISyntaxException {
+    assertThrows(URISyntaxException.class, () -> parseUri("://"));
+  }
+
+  @Test
+  void recoverFlatMapExampleNull() throws URISyntaxException {
+    assertThat(
+        parseUri(null),
+        nullValue());
   }
 }
