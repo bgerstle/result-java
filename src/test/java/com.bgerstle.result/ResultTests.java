@@ -186,25 +186,25 @@ public class ResultTests {
         });
   }
 
+  List<Integer> parseInts(List<String> intStrings) throws NumberFormatException {
+    return intStrings
+        .stream()
+        .map(i -> Result.<Integer, NumberFormatException>attempt(() -> parseInt(i)))
+        .collect(new ResultCollector<>())
+        .orElseThrow();
+  }
+
   @Test
   void resultCollectorAllSuccessful() {
     assertThat(
-        Stream
-            .of("1", "2", "3", "1337")
-            .map(i -> Result.<Integer, NumberFormatException>attempt(() -> parseInt(i)))
-            .collect(new ResultCollector<>())
-            .orElseThrow(),
+        parseInts(List.of("1", "2", "3", "1337")),
         equalTo(List.of(1, 2, 3, 1337)));
   }
 
   @Test
   void resultCollectorThrowsOnFailure() {
     assertThrows(NumberFormatException.class, () -> {
-      Stream
-          .of("1", "2", "3", "can't parse me")
-          .map(i -> Result.<Integer, NumberFormatException>attempt(() -> parseInt(i)))
-          .collect(new ResultCollector<>())
-          .orElseThrow();
+      parseInts(List.of("1", "2", "can't parse me"));
     });
   }
 }
