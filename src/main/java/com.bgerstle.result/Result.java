@@ -63,17 +63,11 @@ public class Result<V, E extends Throwable> {
   }
 
   public <T> Result<T, E> map(Function<? super V, ? extends T> mapper) {
-    return Optional.ofNullable(error)
-                   // Result.failure type must be specified,
-                   // or type of fallback below can't be determined
-                   .map(e -> Result.<T, E>failure(e))
-                   .orElseGet(() -> Result.success(mapper.apply(value)));
+    return Result.of(getValue().<Object>map(mapper).orElse(error));
   }
 
   public <T> Result<T, E> flatMapAttempt(CheckedFunction<? super V, ? extends T, ? super E> cf) {
-    return getValue()
-        .map((v) -> (Result<T, E>)attempt(() -> cf.apply(v)))
-        .orElseGet(() -> Result.failure(Objects.requireNonNull(error)));
+    return flatMap(v -> Result.attempt(() -> cf.apply(v)));
   }
 
 
@@ -84,9 +78,7 @@ public class Result<V, E extends Throwable> {
           Result<T, E> r = (Result<T, E>) mapper.apply(v);
           return Objects.requireNonNull(r);
         })
-        .orElseGet(() ->
-                       Result.failure(Objects.requireNonNull(error))
-        );
+        .orElseGet(() -> Result.failure(error));
   }
 
   /**
