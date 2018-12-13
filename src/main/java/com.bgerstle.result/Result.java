@@ -62,6 +62,10 @@ public class Result<V, E extends Throwable> {
     return Result.success((V)o);
   }
 
+  public static <T, V, E extends Throwable> Function<T, Result<V, E>> from(CheckedFunction<T, V, E> cf) {
+    return (t) -> Result.attempt(() -> cf.apply(t));
+  }
+
   public <T> Result<T, E> map(Function<? super V, ? extends T> mapper) {
     return Result.of(getValue().<Object>map(mapper).orElse(error));
   }

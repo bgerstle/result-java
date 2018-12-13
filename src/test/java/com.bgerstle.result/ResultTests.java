@@ -7,6 +7,7 @@ import org.quicktheories.core.Gen;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -206,5 +207,27 @@ public class ResultTests {
     assertThrows(NumberFormatException.class, () -> {
       parseInts(List.of("1", "2", "can't parse me"));
     });
+  }
+
+  @Test
+  void mapResultFromThrowingFunction() throws URISyntaxException {
+    var uriString = "http://example.com";
+    var uri = new URI(uriString);
+    assertThat(
+        Optional.ofNullable(uriString)
+                .map(Result.from(URI::new))
+                .get()
+                .orElseThrow(),
+        equalTo(uri));
+  }
+
+  @Test
+  void resultFromThrowsError() throws URISyntaxException{
+    var uriString = "://";
+    assertThrows(URISyntaxException.class, () ->
+        Optional.ofNullable(uriString)
+                .map(Result.from(URI::new))
+                .get()
+                .orElseThrow());
   }
 }
